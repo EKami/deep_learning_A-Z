@@ -52,8 +52,7 @@ X_test = sc.transform(X_test)
 
 # Importing the Keras libraries and packages
 from tensorflow.contrib.keras.api.keras.models import Sequential
-from tensorflow.contrib.keras.api.keras.layers import Dense
-from tensorflow.contrib.keras.api.keras.layers import Dropout
+from tensorflow.contrib.keras.api.keras.layers import Dense, Dropout
 
 # Initialising the ANN
 classifier = Sequential()
