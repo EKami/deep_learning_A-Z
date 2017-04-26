@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 
+# I execute the code remotely, this piece of code helps to find the right path for the files
 script_dir = os.path.dirname(__file__)
 train_path = os.path.join(script_dir, 'Churn_Modelling_train.csv')
 test_path = os.path.join(script_dir, 'Churn_Modelling_test.csv')
@@ -10,10 +11,10 @@ train_df_X = pd.read_csv(train_path)
 test_df_X = pd.read_csv(test_path)
 test_df_len = len(test_df_X)
 
-# Keep only useful columns
 y_train = train_df_X['Exited']
-# Merge test and train to do operations on both dataset and split them after
+# Merge test and train to do the operations on both dataset and split them after
 X = train_df_X.append(test_df_X)
+# Keep only useful columns
 X.drop(['RowNumber', 'CustomerId', 'Surname', 'Exited'], axis=1, inplace=True)
 
 # Encoding categorical data
@@ -56,13 +57,16 @@ classifier.add(Dense(units=1, kernel_initializer='uniform', activation='sigmoid'
 classifier.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
 # Fitting the ANN to the Training set
-classifier.fit(X_train, y_train, batch_size=10, epochs=10, validation_split=0.1)
+classifier.fit(X_train, y_train, batch_size=10, epochs=20, validation_split=0.1)
 
 # Part 4 - Making predictions and evaluating the model
 
 # Predicting the Test set results
 y_pred = classifier.predict(X_test)
 y_pred = (y_pred > 0.5)
+
 print("Should we say goodbye to that customer ?", *y_pred)
+
+# Always close the Keras session to free up used resources
 backend.clear_session()
 
