@@ -55,6 +55,7 @@ X_test = sc.transform(X_test)
 # Importing the Keras libraries and packages
 from tensorflow.contrib.keras.api.keras.models import Sequential
 from tensorflow.contrib.keras.api.keras.layers import Dense
+from tensorflow.contrib.keras import backend
 
 # Initialising the ANN
 classifier = Sequential()
@@ -85,3 +86,4 @@ from sklearn.metrics import confusion_matrix
 
 cm = confusion_matrix(y_test, y_pred)
 print(cm)
+backend.clear_session()

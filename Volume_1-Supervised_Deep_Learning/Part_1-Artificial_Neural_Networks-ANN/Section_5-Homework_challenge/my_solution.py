@@ -1,47 +1,30 @@
-# Artificial Neural Network
-
-# Installing Theano
-# pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git
-
-# Installing Tensorflow
-# pip install tensorflow
-
-# Installing Keras
-# pip install --upgrade keras
-
-# Part 1 - Data Preprocessing
-
-# Importing the libraries
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
 script_dir = os.path.dirname(__file__)
-abs_file_path = os.path.join(script_dir, 'Churn_Modelling.csv')
+train_path = os.path.join(script_dir, 'Churn_Modelling_train.csv')
+test_path = os.path.join(script_dir, 'Churn_Modelling_test.csv')
 
 # Importing the dataset
-dataset = pd.read_csv(abs_file_path)
-X = dataset.iloc[:, 3:13].values
-y = dataset.iloc[:, 13].values
+train_df_X = pd.read_csv(train_path)
+test_df_X = pd.read_csv(test_path)
+test_df_len = len(test_df_X)
+
+# Keep only useful columns
+y_train = train_df_X['Exited']
+# Merge test and train to do operations on both dataset and split them after
+X = train_df_X.append(test_df_X)
+X.drop(['RowNumber', 'CustomerId', 'Surname', 'Exited'], axis=1, inplace=True)
 
 # Encoding categorical data
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+X = pd.get_dummies(X, columns=['Geography', 'Gender'], drop_first=True)
 
-labelencoder_X_1 = LabelEncoder()
-X[:, 1] = labelencoder_X_1.fit_transform(X[:, 1])
+# Split back train/test dataset
+X_test = X[-test_df_len:]
+X_train = X[:-test_df_len]
 
-labelencoder_X_2 = LabelEncoder()
-X[:, 2] = labelencoder_X_2.fit_transform(X[:, 2])
-
-onehotencoder = OneHotEncoder(categorical_features=[1])
-X = onehotencoder.fit_transform(X).toarray()
-X = X[:, 1:]
-
-# Splitting the dataset into the Training set and Test set
-from sklearn.model_selection import train_test_split
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+# Check that the size of the original dataset has been kept
+assert(len(train_df_X) == len(X_train))
 
 # Feature Scaling
 from sklearn.preprocessing import StandardScaler
@@ -55,6 +38,7 @@ X_test = sc.transform(X_test)
 # Importing the Keras libraries and packages
 from tensorflow.contrib.keras.api.keras.models import Sequential
 from tensorflow.contrib.keras.api.keras.layers import Dense
+from tensorflow.contrib.keras import backend
 
 # Initialising the ANN
 classifier = Sequential()
@@ -72,12 +56,13 @@ classifier.add(Dense(units=1, kernel_initializer='uniform', activation='sigmoid'
 classifier.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
 # Fitting the ANN to the Training set
-classifier.fit(X_train, y_train, batch_size=10, epochs=100, validation_split=0.1)
-
-# Part 5 - Adding the customer to the dataset
+classifier.fit(X_train, y_train, batch_size=10, epochs=10, validation_split=0.1)
 
 # Part 4 - Making predictions and evaluating the model
 
 # Predicting the Test set results
 y_pred = classifier.predict(X_test)
 y_pred = (y_pred > 0.5)
+print("Should we say goodbye to that customer ?", *y_pred)
+backend.clear_session()
+
