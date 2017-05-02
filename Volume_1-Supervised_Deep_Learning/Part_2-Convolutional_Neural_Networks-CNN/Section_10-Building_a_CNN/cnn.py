@@ -58,7 +58,7 @@ classifier.add(Dense(units=1, activation='sigmoid'))
 classifier.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
 # Part 2 - Fitting the CNN to the images
-batch_size = 16
+batch_size = 32
 train_datagen = ImageDataGenerator(rescale=1. / 255,
                                    shear_range=0.2,
                                    zoom_range=0.2,
