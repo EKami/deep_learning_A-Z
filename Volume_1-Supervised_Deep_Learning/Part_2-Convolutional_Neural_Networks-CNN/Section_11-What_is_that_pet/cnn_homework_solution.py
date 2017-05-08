@@ -22,7 +22,7 @@ import os
 script_dir = os.path.dirname(__file__)
 training_set_path = os.path.join(script_dir, '../dataset/training_set')
 test_set_path = os.path.join(script_dir, '../dataset/test_set')
-file_test_path = os.path.join(script_dir, '../dataset/single_prediction/cat_or_dog_1.jpg')
+file_test_path = os.path.join(script_dir, '../dataset/single_prediction/cat_or_dog_1.jpeg')
 
 # Initialising the CNN
 classifier = Sequential()
