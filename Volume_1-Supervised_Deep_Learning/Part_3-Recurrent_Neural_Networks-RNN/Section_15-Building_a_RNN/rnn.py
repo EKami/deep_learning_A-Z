@@ -7,8 +7,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import os
+
 # Importing the training set
-training_set = pd.read_csv('Google_Stock_Price_Train.csv')
+script_dir = os.path.dirname(__file__)
+train_set_path = os.path.join(script_dir, '../dataset/Google_Stock_Price_Train.csv')
+training_set = pd.read_csv(train_set_path)
 training_set = training_set.iloc[:, 1:2].values
 
 # Feature Scaling
@@ -49,7 +53,9 @@ regressor.fit(X_train, y_train, batch_size=32, epochs=200)
 # Part 3 - Making the predictions and visualising the results
 
 # Getting the real stock price of 2017
-test_set = pd.read_csv('Google_Stock_Price_Test.csv')
+script_dir = os.path.dirname(__file__)
+test_set_path = os.path.join(script_dir, '../dataset/Google_Stock_Price_Test.csv')
+test_set = pd.read_csv(test_set_path)
 real_stock_price = test_set.iloc[:, 1:2].values
 
 # Getting the predicted stock price of 2017
