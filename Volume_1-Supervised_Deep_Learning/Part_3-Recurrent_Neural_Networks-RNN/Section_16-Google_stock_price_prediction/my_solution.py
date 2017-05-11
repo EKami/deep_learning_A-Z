@@ -6,14 +6,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-
-import os
+import pandas_datareader as pdr
+from datetime import datetime
 
 # Importing the training set
-script_dir = os.path.dirname(__file__)
-train_set_path = os.path.join(script_dir, '../dataset/Google_Stock_Price_Train.csv')
-training_set = pd.read_csv(train_set_path)
-training_set = training_set.iloc[:, 1:2].values
+training_set = pdr.get_data_yahoo(symbols='GOOGL', start=datetime(2012, 1, 1), end=datetime(2016, 1, 1))
+training_set = training_set[['Open']].values
 
 # Feature Scaling
 from sklearn.preprocessing import MinMaxScaler
@@ -22,11 +20,11 @@ sc = MinMaxScaler()
 training_set = sc.fit_transform(training_set)
 
 # Getting the inputs and the ouputs
-X_train = training_set[0:1257]
-y_train = training_set[1:1258]
+X_train = training_set[0:-1]
+y_train = training_set[1:]
 
 # Reshaping
-X_train = np.reshape(X_train, (1257, 1, 1))
+X_train = np.reshape(X_train, (len(X_train), 1, 1))
 
 # Part 2 - Building the RNN
 
@@ -58,15 +56,12 @@ regressor.fit(X_train, y_train, batch_size=32, epochs=200)
 # Part 3 - Making the predictions and visualising the results
 
 # Getting the real stock price of 2017
-script_dir = os.path.dirname(__file__)
-test_set_path = os.path.join(script_dir, '../dataset/Google_Stock_Price_Test.csv')
-test_set = pd.read_csv(test_set_path)
-real_stock_price = test_set.iloc[:, 1:2].values
+test_set = pdr.get_data_yahoo(symbols='GOOGL', start=datetime(2012, 1, 1), end=datetime(2016, 1, 1))
+real_stock_price = test_set[['Open']].values
 
-# Getting the predicted stock price of 2017
 inputs = real_stock_price
 inputs = sc.transform(inputs)
-inputs = np.reshape(inputs, (20, 1, 1))
+inputs = np.reshape(inputs, (len(inputs), 1, 1))
 predicted_stock_price = regressor.predict(inputs)
 predicted_stock_price = sc.inverse_transform(predicted_stock_price)
 
