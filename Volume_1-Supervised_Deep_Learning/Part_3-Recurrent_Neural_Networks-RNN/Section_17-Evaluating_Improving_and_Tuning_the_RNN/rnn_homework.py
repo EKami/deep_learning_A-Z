@@ -8,6 +8,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
+# Importing the Keras libraries and packages
+from tensorflow.contrib.keras.api.keras.models import Sequential
+from tensorflow.contrib.keras.api.keras.layers import Dense
+from tensorflow.contrib.keras.api.keras.layers import LSTM
+from tensorflow.contrib.keras import backend
+
 # Importing the training set
 script_dir = os.path.dirname(__file__)
 train_set_path = os.path.join(script_dir, '../dataset/Google_Stock_Price_Train.csv')
@@ -29,12 +35,6 @@ y_train = training_set[1:1258]
 X_train = np.reshape(X_train, (1257, 1, 1))
 
 # Part 2 - Building the RNN
-
-# Importing the Keras libraries and packages
-from tensorflow.contrib.keras.api.keras.models import Sequential
-from tensorflow.contrib.keras.api.keras.layers import Dense
-from tensorflow.contrib.keras.api.keras.layers import LSTM
-from tensorflow.contrib.keras import backend
 
 # Initialising the RNN
 regressor = Sequential()
@@ -66,6 +66,10 @@ inputs = sc.transform(inputs)
 inputs = np.reshape(inputs, (20, 1, 1))
 predicted_stock_price = regressor.predict(inputs)
 predicted_stock_price = sc.inverse_transform(predicted_stock_price)
+
+# Align real values with their predictions
+predicted_stock_price = predicted_stock_price[:-1]
+real_stock_price = real_stock_price[1:]
 
 # Visualising the results
 plt.plot(real_stock_price, color='red', label='Real Google Stock Price')
