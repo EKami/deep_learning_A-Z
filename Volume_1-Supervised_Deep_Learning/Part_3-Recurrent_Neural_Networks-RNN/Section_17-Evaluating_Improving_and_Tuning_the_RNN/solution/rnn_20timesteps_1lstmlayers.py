@@ -42,7 +42,7 @@ from tensorflow.contrib.keras.api.keras.layers import LSTM
 regressor = Sequential()
 
 # Adding the input layer and the LSTM layer
-regressor.add(LSTM(units=3, input_shape=(None, 1)))
+regressor.add(LSTM(units=3, input_shape=(20, 1)))
 
 # Adding the output layer
 regressor.add(Dense(units=1))
