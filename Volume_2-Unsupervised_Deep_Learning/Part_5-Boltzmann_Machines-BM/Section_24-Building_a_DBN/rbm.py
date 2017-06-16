@@ -4,21 +4,25 @@
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
 import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data
 from torch.autograd import Variable
 
 # Importing the dataset
-movies = pd.read_csv('ml-1m/movies.dat', sep='::', header=None, engine='python', encoding='latin-1')
-users = pd.read_csv('ml-1m/users.dat', sep='::', header=None, engine='python', encoding='latin-1')
-ratings = pd.read_csv('ml-1m/ratings.dat', sep='::', header=None, engine='python', encoding='latin-1')
+movies = pd.read_csv('ml-1m/movies.dat', sep='::', header=None, engine='python', encoding='latin-1',
+                     names=['movie_id', 'title', 'category'])
+users = pd.read_csv('ml-1m/users.dat', sep='::', header=None, engine='python', encoding='latin-1',
+                    names=['user_id', 'gender', 'age', 'user_job_id', 'zip_code'])
+ratings = pd.read_csv('ml-1m/ratings.dat', sep='::', header=None, engine='python', encoding='latin-1',
+                      names=['user_id', 'movie_id', 'rating', 'timestamp'])
 
 # Preparing the training set and the test set
-training_set = pd.read_csv('ml-100k/u1.base', delimiter='\t')
+training_set = pd.read_csv('ml-100k/u1.base', delimiter='\t',
+                           names=['user_id', 'movie_id', 'rating', 'timestamp'])
 training_set = np.array(training_set, dtype='int')
-test_set = pd.read_csv('ml-100k/u1.test', delimiter='\t')
+test_set = pd.read_csv('ml-100k/u1.test', delimiter='\t',
+                       names=['user_id', 'movie_id', 'rating', 'timestamp'])
 test_set = np.array(test_set, dtype='int')
 
 # Getting the number of users and movies
@@ -29,15 +33,17 @@ nb_movies = int(max(max(training_set[:, 1]), max(test_set[:, 1])))
 # Converting the data into an array with users in lines and movies in columns
 def convert(data):
     new_data = []
-    for id_users in range(1, nb_users + 1):
-        id_movies = data[:, 1][data[:, 0] == id_users]
-        id_ratings = data[:, 2][data[:, 0] == id_users]
+    for user_id in range(1, nb_users + 1):
+        id_movies = data[:, 1][data[:, 0] == user_id]
+        id_ratings = data[:, 2][data[:, 0] == user_id]
         ratings = np.zeros(nb_movies)
         ratings[id_movies - 1] = id_ratings
         new_data.append(list(ratings))
     return new_data
 
-
+# Array with users in lines and movies in columns
+# [user_1, user_2, ..., user_943]
+# [[movie_1_rating] [movie_2_rating] ... [movie_1682_rating]]
 training_set = convert(training_set)
 test_set = convert(test_set)
 
@@ -57,28 +63,40 @@ test_set[test_set >= 3] = 1
 
 
 # Creating the architecture of the Neural Network
-class RBM():
-    def __init__(self, nv, nh):
-        self.W = torch.randn(nh, nv)
-        self.a = torch.randn(1, nh)
-        self.b = torch.randn(1, nv)
+class RBM:
+    def __init__(self, n_visible_nodes, n_hidden_nodes):
+        self.W = torch.randn(n_hidden_nodes, n_visible_nodes)
+        self.a = torch.randn(1, n_hidden_nodes)
+        self.b = torch.randn(1, n_visible_nodes)
 
     def sample_h(self, x):
+        """
+        Sample the probabilities of the hidden nodes given
+        the visible nodes
+        :param x: inputs
+        :return:
+        """
         wx = torch.mm(x, self.W.t())
-        activation = wx + self.a.expand_as(wx)
-        p_h_given_v = torch.sigmoid(activation)
+        activation = wx + self.a.expand_as(wx)  # Weights + bias
+        p_h_given_v = torch.sigmoid(activation)  # output
         return p_h_given_v, torch.bernoulli(p_h_given_v)
 
     def sample_v(self, y):
+        """
+        Sample the probabilities of the visibles nodes given the
+        hidden nodes
+        :param y:
+        :return:
+        """
         wy = torch.mm(y, self.W)
-        activation = wy + self.b.expand_as(wy)
+        activation = wy + self.b.expand_as(wy)  # Weights + bias
         p_v_given_h = torch.sigmoid(activation)
         return p_v_given_h, torch.bernoulli(p_v_given_h)
 
     def train(self, v0, vk, ph0, phk):
         self.W += torch.mm(v0.t(), ph0) - torch.mm(vk.t(), phk)
-        self.b += torch.sum((v0 - vk), 0)
-        self.a += torch.sum((ph0 - phk), 0)
+        self.b += torch.sum(v0 - vk)
+        self.a += torch.sum(ph0 - phk)
 
 
 nv = len(training_set[0])
