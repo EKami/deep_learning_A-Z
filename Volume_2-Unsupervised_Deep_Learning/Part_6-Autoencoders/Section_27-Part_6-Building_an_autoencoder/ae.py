@@ -38,12 +38,15 @@ def convert(data):
     return new_data
 
 
+# Array with users in lines and movies in columns
+# [user_1, user_2, ..., user_943]
+# [[movie_1_rating] [movie_2_rating] ... [movie_1682_rating]]
 training_set = convert(training_set)
 test_set = convert(test_set)
 
 # Converting the data into Torch tensors
-training_set = torch.FloatTensor(training_set)
-test_set = torch.FloatTensor(test_set)
+training_set = torch.FloatTensor(training_set)#.cuda()
+test_set = torch.FloatTensor(test_set)#.cuda()
 
 
 # Creating the architecture of the Neural Network
@@ -72,33 +75,41 @@ optimizer = optim.RMSprop(sae.parameters(), lr=0.01, weight_decay=0.5)
 nb_epoch = 200
 for epoch in range(1, nb_epoch + 1):
     train_loss = 0
-    s = 0.
+    s = 0.  # Number of users who rated at least 1 movie
     for id_user in range(nb_users):
+        # Creates a 2D array instead of 1D, Pytorch only accept batch of data
         input = Variable(training_set[id_user]).unsqueeze(0)
-        target = input.clone()
-        if torch.sum(target.data > 0) > 0:
-            output = sae(input)
-            target.require_grad = False
+        target = input.clone()  # Outputs should be the same as inputs
+        if torch.sum(target.data) > 0:  # User rated at least 1 movie
+            output = sae.forward(input)
+            target.require_grad = False  # For code optimization
             output[target == 0] = 0
             loss = criterion(output, target)
+            loss.backward()  # Perform backpropagation
+            optimizer.step()  # Define the intensity of backward pass
+
+            # 1e-10 so that we never divide by 0
+            # mean_corrector corresponds to the average of the error of the rated movies only
+            # it's not used in the backprop calculation, just for metrics
             mean_corrector = nb_movies / float(torch.sum(target.data > 0) + 1e-10)
-            loss.backward()
             train_loss += np.sqrt(loss.data[0] * mean_corrector)
-            s += 1.
-            optimizer.step()
+            s += 1.  # Increment number of users who rated at least 1 movie
     print('epoch: ' + str(epoch) + ' loss: ' + str(train_loss / s))
 
 # Testing the SAE
 test_loss = 0
 s = 0.
 for id_user in range(nb_users):
+    # The training set contains movies that the user has not yet watched
     input = Variable(training_set[id_user]).unsqueeze(0)
+    # The test set contains the movies that the user watched
     target = Variable(test_set[id_user])
-    if torch.sum(target.data > 0) > 0:
-        output = sae(input)
+    if torch.sum(target.data) > 0:
+        output = sae.forward(input)
         target.require_grad = False
         output[target == 0] = 0
         loss = criterion(output, target)
+
         mean_corrector = nb_movies / float(torch.sum(target.data > 0) + 1e-10)
         test_loss += np.sqrt(loss.data[0] * mean_corrector)
         s += 1.
